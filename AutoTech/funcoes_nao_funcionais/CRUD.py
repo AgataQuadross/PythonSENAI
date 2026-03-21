@@ -7,6 +7,29 @@ import os
 def LimparTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+#---- Login do Administrador ----
+def LoginAdmin():
+    LimparTela()
+    print("---- Login do Administrador ----")
+
+    usuario_correto = "admin"
+    senha_correta = "1234"
+
+    tentativas = 3
+    while tentativas > 0:
+        usuario = input("Usuário: ")
+        senha = input("Senha: ")
+
+        if usuario == usuario_correto and senha == senha_correta:
+            print("\n Acesso Autorizado!")
+            return True
+        else:
+            tentativas -= 1
+            print(f" Credenciais incorretas. Você tem {tentativas} tentativa(s) restante(s). \n")
+
+    print(" Acesso Bloqueado. Sistema encerrado.")
+    return False
+
 #---- Catálogo de peças ----
 def CatalogoPecas():
     LimparTela()
@@ -37,5 +60,8 @@ def CatalogoPecas():
     for nome, preco in catalogo.items():
         print(f"{nome}: R$ {preco:.2f}")
 
-
-CatalogoPecas()
+if __name__ == "__main__":
+    
+    if LoginAdmin():
+     
+        CatalogoPecas()
