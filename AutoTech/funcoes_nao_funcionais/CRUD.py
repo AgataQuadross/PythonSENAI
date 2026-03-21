@@ -38,4 +38,4 @@ def CatalogoPecas():
         print(f"{nome}: R$ {preco:.2f}")
 
 
- CatalogoPecas()
+CatalogoPecas()
