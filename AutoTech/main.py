@@ -1,13 +1,9 @@
-# Primeiramente fazer o registro das peças que seram inseridas no catálogo 
-# Deve ter a quantidade de cada peça que será registrada
-# Juntamente com o valor de cada peça
-# Utilizar dicionários para facilitar a busca da peça juntamente com seu respectivo valor
 import os
 
 def LimparTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-#---- Login do Administrador ----
+# ---- Login do Administrador ----
 def LoginAdmin():
     LimparTela()
     print("---- Login do Administrador ----")
@@ -21,98 +17,153 @@ def LoginAdmin():
         senha = input("Senha: ")
 
         if usuario == usuario_correto and senha == senha_correta:
-            print("\n Acesso Autorizado!")
+            print("\n✅ Acesso Autorizado!")
             return True
         else:
             tentativas -= 1
-            print(f" Credenciais incorretas. Você tem {tentativas} tentativa(s) restante(s). \n")
+            print(f"❌ Credenciais incorretas. Você tem {tentativas} tentativa(s) restante(s).\n")
 
-    print(" Acesso Bloqueado. Sistema encerrado.")
+    print("🚫 Acesso Bloqueado. Retornando ao menu.")
+    input("\nPressione Enter para continuar...")
     return False
 
-#---- Catálogo de peças ----
-def CatalogoPecas():
+# ---- Cadastro de Peças (Área Admin) ----
+def CatalogoPecas(catalogo):
     LimparTela()
-
-    catalogo = {}
+    print("---- Cadastro de Peças ----")
 
     try:
         numero_pecas = int(input("\nQuantas peças deseja cadastrar? "))
     except ValueError:
         print("Erro: Por favor, digite um número inteiro.")
+        input("\nPressione Enter para continuar...")
         return
     
     for i in range(numero_pecas):
-        print(f"\n---- Cadastrando a {i+1}ª peça ----")
-
+        print(f"\n-- Cadastrando a {i+1}ª peça --")
         nome_peca = input("Nome da peça: ").strip().title()
 
         try:
-            preco_peca = float(input(f"Preço da peça '{nome_peca}': R$ ").replace(',', '.'))
+            preco_peca = float(input(f"Preço de '{nome_peca}': R$ ").replace(',', '.'))
+            quant_peca = int(input(f"Quantidade em estoque: "))
 
-            catalogo[nome_peca] = preco_peca
-            print("Peça cadastrada com sucesso!")
+            # Salvando preço e quantidade no dicionário aninhado
+            catalogo[nome_peca] = {"preco": preco_peca, "quantidade": quant_peca}
+            print("✅ Peça cadastrada com sucesso!")
 
         except ValueError:
-            print("Erro: Preço inválido. Esta peça não foi cadastrada.")
+            print("❌ Erro: Valor inválido. Esta peça não foi cadastrada.")
 
-    print("\n---- Catálogo Finalizado ----")
-    for nome, preco in catalogo.items():
-        print(f"{nome}: R$ {preco:.2f}")
+    print("\n---- Catálogo Atualizado ----")
+    for nome, dados in catalogo.items():
+        print(f"{nome}: R$ {dados['preco']:.2f} | Estoque: {dados['quantidade']}")
+    
+    input("\nPressione Enter para voltar ao menu...")
+
+# ---- Área de Vendas (Cliente) ----
+def Carrinho(catalogo):
+    LimparTela()
+    print("---- Carrinho de Compras ----")
+    
+    if not catalogo:
+        print("O catálogo está vazio. Volte mais tarde!")
+        input("\nPressione Enter para voltar...")
+        return 0
+
+    total = 0.0
+    continua = True
+
+    while continua:
+        print("\n-- Peças Disponíveis --")
+        for nome, dados in catalogo.items():
+            print(f"{nome}: R$ {dados['preco']:.2f} (Estoque: {dados['quantidade']})")
+            
+        compra_peca = input("\nQual peça você gostaria de comprar? ").strip().title()
+        
+        if compra_peca not in catalogo:
+            print("❌ Esta peça não existe no catálogo.")
+        else:
+            try:
+                quant_compra = int(input(f"Quantas unidades de '{compra_peca}' você vai levar? "))
+                
+                estoque_disponivel = catalogo[compra_peca]["quantidade"]
+                
+                if quant_compra <= 0:
+                    print("❌ Quantidade inválida.")
+                elif quant_compra > estoque_disponivel:
+                    print(f"❌ Estoque insuficiente. Temos apenas {estoque_disponivel} unidades.")
+                else:
+                    # Deduz do estoque e soma no total
+                    catalogo[compra_peca]["quantidade"] -= quant_compra
+                    subtotal_item = catalogo[compra_peca]["preco"] * quant_compra
+                    total += subtotal_item
+                    
+                    print(f"✅ {quant_compra}x '{compra_peca}' adicionado(s)! Subtotal do item: R$ {subtotal_item:.2f}")
+            except ValueError:
+                print("❌ Por favor, digite um número inteiro para a quantidade.")
+
+        opcao = input("\nQuer comprar mais? (s/n): ").strip().lower()
+        if opcao != "s":
+            continua = False
+
+    return total
+
+# ---- Fechamento de Conta (Taxas e Descontos) ----
+def Fechamento(total):
+    if total == 0:
+        return
+
+    LimparTela()
+    print("---- Nota Fiscal ----")
+    print(f"Subtotal da compra: R$ {total:.2f}")
+
+    # Acima de R$500 == 10% de desconto
+    desconto = 0.0
+    if total >= 500:
+        desconto = total * 0.10
+        print(f"Desconto (10%): - R$ {desconto:.2f}")
+    
+    total_com_desconto = total - desconto
+
+    # 18% de imposto ICMS sobre o valor (com desconto aplicado)
+    taxa_icms = total_com_desconto * 0.18
+    print(f"Imposto ICMS (18%): + R$ {taxa_icms:.2f}")
+
+    total_final = total_com_desconto + taxa_icms
+    print("---------------------")
+    print(f"TOTAL A PAGAR: R$ {total_final:.2f}")
+    print("---------------------\n")
+    
+    input("Pressione Enter para voltar ao menu...")
+
+# ---- Estrutura Principal ----
+def MenuPrincipal():
+    # O catálogo nasce aqui e é passado para as funções que precisam dele
+    catalogo_loja = {} 
+
+    while True:
+        LimparTela()
+        print("==== SISTEMA DA LOJA DE PEÇAS ====")
+        print("1. Área do Administrador (Cadastrar Peças)")
+        print("2. Área do Cliente (Comprar Peças)")
+        print("3. Sair")
+        print("==================================")
+        
+        opcao = input("Escolha uma opção: ").strip()
+
+        if opcao == "1":
+            if LoginAdmin():
+                CatalogoPecas(catalogo_loja)
+        elif opcao == "2":
+            total_compra = Carrinho(catalogo_loja)
+            Fechamento(total_compra)
+        elif opcao == "3":
+            LimparTela()
+            print("Sistema encerrado. Até logo!")
+            break
+        else:
+            print("Opção inválida! Tente novamente.")
+            input("\nPressione Enter para continuar...")
 
 if __name__ == "__main__":
-    
-    if LoginAdmin():
-     
-        CatalogoPecas()
-
-
-def Carrinho():
-    # roda em while
-    # acessaa lista de peças
-    # calcula total por quantidade da peça
-    # apresentar o total
-    continua = True
-    while continua == True:
-        compra_peca = input("Qual peça você gostaria de comprar? (digite uma por vez) ")
-        quant_compra = input("Quantas dessa peça você vai levar? ")
-        total = 0
-
-        pecas = ListaPecas()
-        carrinho = dict.fromkeys(compra_peca, quant_peca)
-        
-        for peca in pecas == compra_peca:
-            peca = pecas.get(compra_peca, "Essa peça não existe")
-
-            total = peca * quant_compra
-
-        nota_fiscal = [{carrinho}, total]
-            
-        opcao = input("quer comprar mais?")
-        if opcao == "s":
-            continue
-        elif opcao =="n":
-            return nota_fiscal
-            continua = False
-        else:
-            print("opção invalida")
-
-
-
-
-
-def Desconto():
-    # acima de 500 == 10% de desconto
-    # 18% de imposto icms
-    total = Carrinho(total)
-    desconto = total
-
-    if total >= 500:
-        desconto = total * 100 / 0.10
-    
-    taxa = desconto * 100 / 0.18
-    
-    total_desc_taxa = total + taxa
-
-    return total_desc_taxa
-
+    MenuPrincipal()
